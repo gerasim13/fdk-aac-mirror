@@ -2473,6 +2473,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
       int ch;
       /* Clear history */
       for (ch = 0; ch < self->aacChannels; ch++) {
+        self->pAacDecoderStaticChannelInfo[ch]->pnsCurrentSeed = 0;
         /* Reset concealment */
         CConcealment_InitChannelData(
             &self->pAacDecoderStaticChannelInfo[ch]->concealmentInfo,
