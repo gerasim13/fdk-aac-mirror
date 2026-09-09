@@ -2341,6 +2341,29 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
     }
   }
 
+  if (*configChanged && (configMode & AC_CM_ALLOC_MEM) &&
+      asc->m_sbrPresentFlag && asc->m_channelConfiguration > 0 &&
+      !(self->flags[streamIndex] & (AC_USAC | AC_ELD | AC_RSVD50))) {
+    CAacDecoder_SyncQmfMode(self);
+    for (int el = 0; el < AACDEC_CH_ELEMENTS_TAB_SIZE; el++) {
+      MP4_ELEMENT_ID type = self->elements[el];
+      if (type == ID_END) break;
+      if (!IS_CHANNEL_ELEMENT(type)) continue;
+      UCHAR sbrConfigChanged = 0;
+      if (sbrDecoder_InitElement(
+              self->hSbrDecoder, self->streamInfo.aacSampleRate,
+              self->streamInfo.extSamplingRate,
+              self->streamInfo.aacSamplesPerFrame, self->streamInfo.aot, type,
+              el, 2, 0, AC_CM_ALLOC_MEM, &sbrConfigChanged,
+              self->downscaleFactor) != SBRDEC_OK) {
+        goto bail;
+      }
+    }
+    if (FDK_QmfDomain_Configure(&self->qmfDomain) != QMF_DOMAIN_OK) {
+      goto bail;
+    }
+  }
+
   /* Update externally visible copy of flags */
   self->streamInfo.flags = self->flags[0];
 
